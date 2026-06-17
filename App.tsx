@@ -4,7 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { AppProvider, useApp } from './src/context/AppContext';
 import { DiscoverScreen } from './src/screens/DiscoverScreen';
@@ -36,23 +37,43 @@ function TabNavigator() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.line,
-          height: 72,
+          backgroundColor: 'transparent',
+          borderTopColor: 'transparent',
+          borderTopWidth: 1,
+          bottom: 18,
+          elevation: 0,
+          height: 66,
+          left: 32,
+          paddingBottom: 8,
           paddingTop: 8,
-          paddingBottom: 12,
+          position: 'absolute',
+          right: 32,
+          shadowOpacity: 0,
         },
+        tabBarBackground: () => (
+          <LinearGradient
+            colors={['rgba(245,254,255,0.22)', 'rgba(8,72,86,0.78)', 'rgba(245,254,255,0.12)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.tabGlass}
+          />
+        ),
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
-        tabBarIcon: ({ color, size }) => {
+        tabBarItemStyle: styles.tabItem,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarIcon: ({ color, focused }) => {
           const name =
             route.name === 'Discover'
-              ? 'film'
+              ? 'home'
               : route.name === 'Search'
-                ? 'search'
-                : 'person-circle';
-          return <Ionicons name={name} size={size} color={color} />;
+                ? 'compass-outline'
+                : 'person-outline';
+          return (
+            <View style={[styles.tabIconBubble, focused && styles.tabIconBubbleActive]}>
+              <Ionicons name={name} size={19} color={focused ? colors.background : color} />
+            </View>
+          );
         },
       })}
     >
@@ -68,9 +89,12 @@ function RootNavigator() {
 
   if (booting) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+      <LinearGradient
+        colors={[colors.background, '#073B47', colors.background]}
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+      >
         <ActivityIndicator size="large" color={colors.accent} />
-      </View>
+      </LinearGradient>
     );
   }
 
@@ -100,3 +124,32 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  tabGlass: {
+    borderColor: 'rgba(245,254,255,0.24)',
+    borderCurve: 'continuous',
+    borderRadius: 999,
+    borderWidth: 1,
+    flex: 1,
+    overflow: 'hidden',
+  },
+  tabItem: {
+    borderRadius: 999,
+  },
+  tabIconBubble: {
+    alignItems: 'center',
+    borderRadius: 999,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  tabIconBubbleActive: {
+    backgroundColor: colors.text,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+});

@@ -1,11 +1,14 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '../components/EmptyState';
+import { MoviePosterCard } from '../components/MoviePosterCard';
+import { mockMovies } from '../data/mockMovies';
 import { tmdb } from '../services/tmdb';
 import { colors, spacing } from '../theme/colors';
 import { MovieSummary } from '../types/movie';
@@ -18,7 +21,25 @@ export function SearchScreen() {
   const navigation = useNavigation<Navigation>();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MovieSummary[]>([]);
+  const [recommendations, setRecommendations] = useState<MovieSummary[]>(mockMovies.slice(0, 8));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    tmdb
+      .popular()
+      .then((movies) => {
+        if (mounted && movies.length) {
+          setRecommendations(movies.slice(0, 8));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handle = setTimeout(async () => {
@@ -44,6 +65,7 @@ export function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient colors={[colors.background, '#064A58', colors.background]} style={StyleSheet.absoluteFill} />
       <View style={styles.header}>
         <Text style={styles.title}>Search</Text>
         <Text style={styles.subtitle}>Find films, save them, and build your watch history.</Text>
@@ -75,9 +97,30 @@ export function SearchScreen() {
           <EmptyState title="No matches" subtitle="Try a different title or spelling." />
         </View>
       ) : !query.trim() ? (
-        <View style={styles.emptyWrap}>
-          <EmptyState icon="search-outline" title="Start typing" subtitle="Results appear here instantly." />
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.recommendContent}>
+          <View style={styles.recommendHeader}>
+            <Text style={styles.recommendKicker}>Before you search</Text>
+            <Text style={styles.recommendTitle}>Recommended Movies</Text>
+          </View>
+          <FlatList
+            data={recommendations}
+            horizontal
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => <MoviePosterCard movie={item} onPress={openMovie} />}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recommendRail}
+          />
+          <View style={styles.quickGrid}>
+            {recommendations.slice(0, 4).map((movie) => (
+              <Pressable key={movie.id} onPress={() => openMovie(movie)} style={styles.quickPick}>
+                <Ionicons name="sparkles-outline" size={16} color={colors.accent} />
+                <Text style={styles.quickPickText} numberOfLines={1}>
+                  {movie.title}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       ) : (
         <FlatList
           data={results}
@@ -142,9 +185,9 @@ const styles = StyleSheet.create({
   },
   searchBox: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.1)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 10,
@@ -172,15 +215,61 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.page,
     paddingTop: 24,
   },
+  recommendContent: {
+    paddingBottom: 110,
+    paddingTop: 26,
+  },
+  recommendHeader: {
+    gap: 4,
+    paddingHorizontal: spacing.page,
+  },
+  recommendKicker: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  recommendTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  recommendRail: {
+    paddingLeft: spacing.page,
+    paddingRight: 4,
+    paddingTop: 16,
+  },
+  quickGrid: {
+    gap: 10,
+    paddingHorizontal: spacing.page,
+    paddingTop: 22,
+  },
+  quickPick: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 46,
+    paddingHorizontal: 14,
+  },
+  quickPickText: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '800',
+  },
   results: {
     gap: 12,
     padding: spacing.page,
-    paddingBottom: 28,
+    paddingBottom: 104,
   },
   result: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',

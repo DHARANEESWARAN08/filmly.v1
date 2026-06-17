@@ -1,3 +1,5 @@
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,11 +21,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '../components/EmptyState';
 import { MoviePosterCard } from '../components/MoviePosterCard';
 import { MovieRow } from '../components/MovieRow';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../hooks/useAuth';
+import { useMovieActions } from '../hooks/useMovieActions';
 import { tmdb } from '../services/tmdb';
 import { colors, spacing } from '../theme/colors';
 import { MovieSummary } from '../types/movie';
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList, TabParamList } from '../types/navigation';
 
 const genres = [
   { id: 28, label: 'Action' },
@@ -34,11 +37,15 @@ const genres = [
   { id: 10749, label: 'Romance' },
 ];
 
-type Navigation = NativeStackNavigationProp<RootStackParamList>;
+type Navigation = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Discover'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export function DiscoverScreen() {
   const navigation = useNavigation<Navigation>();
-  const { user, toggleFavorite, isFavorite } = useApp();
+  const { user } = useAuth();
+  const { toggleFavorite, isFavorite } = useMovieActions();
   const [popular, setPopular] = useState<MovieSummary[]>([]);
   const [upcoming, setUpcoming] = useState<MovieSummary[]>([]);
   const [topRated, setTopRated] = useState<MovieSummary[]>([]);
@@ -81,26 +88,48 @@ export function DiscoverScreen() {
     navigation.navigate('MovieDetails', { movieId: movie.id });
   };
 
+  const openSearch = () => {
+    navigation.navigate('Search');
+  };
+
+  const openSaved = () => {
+    navigation.navigate('Profile');
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient colors={[colors.background, '#064A58', colors.background]} style={StyleSheet.absoluteFill} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.topBar}>
-          <View style={styles.brand}>
-            <Image source={require('../../assets/filmly-logo.png')} style={styles.logo} resizeMode="contain" />
-            <View>
-              <Text style={styles.brandText}>Filmly</Text>
-              <Text style={styles.brandSub}>{user ? `Hi, ${user.name}` : 'Your cinema dashboard'}</Text>
-            </View>
+          <View style={styles.userPill}>
+            <Image
+              source={user?.avatar ? { uri: user.avatar } : require('../../assets/filmly-mark.png')}
+              style={styles.avatar}
+              resizeMode="cover"
+            />
+            <Text style={styles.userName} numberOfLines={1}>
+              {user?.name || 'Filmly'}
+            </Text>
           </View>
-          <View style={styles.badge}>
-            <Ionicons name="sparkles" size={16} color={colors.accent} />
+          <View style={styles.iconRail}>
+            <Pressable onPress={openSearch} style={({ pressed }) => [styles.badge, pressed && styles.pressedBadge]}>
+              <Ionicons name="search" size={17} color={colors.text} />
+            </Pressable>
+            <Pressable onPress={openSaved} style={({ pressed }) => [styles.badge, pressed && styles.pressedBadge]}>
+              <Ionicons name="bookmark-outline" size={17} color={colors.text} />
+            </Pressable>
           </View>
+        </View>
+
+        <View style={styles.headlineBlock}>
+          <Text style={styles.kicker}>Watch what matters</Text>
+          <Text style={styles.headline}>Enjoy movies & shows in stunning quality</Text>
         </View>
 
         {hero ? (
           <Pressable onPress={() => openMovie(hero)} style={styles.hero}>
             <ImageBackground source={{ uri: hero.backdropPath || hero.posterPath || undefined }} style={styles.heroImage}>
-              <LinearGradient colors={['rgba(8,10,15,0.05)', colors.background]} style={styles.heroOverlay} />
+              <LinearGradient colors={['rgba(2,18,24,0.03)', 'rgba(2,18,24,0.42)', colors.background]} style={styles.heroOverlay} />
               <View style={styles.heroContent}>
                 <View style={styles.heroEyebrow}>
                   <Ionicons name="flame" color={colors.hot} size={14} />
@@ -182,7 +211,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 28,
+    paddingBottom: 104,
   },
   topBar: {
     alignItems: 'center',
@@ -191,41 +220,70 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.page,
     paddingVertical: 12,
   },
-  brand: {
+  userPill: {
     alignItems: 'center',
+    backgroundColor: 'rgba(245,254,255,0.1)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 10,
+    gap: 9,
+    maxWidth: '68%',
+    minHeight: 42,
+    paddingHorizontal: 10,
+    paddingRight: 16,
   },
-  logo: {
-    height: 48,
-    width: 48,
+  avatar: {
+    borderRadius: 16,
+    height: 32,
+    width: 32,
   },
-  brandText: {
+  userName: {
     color: colors.text,
-    fontSize: 25,
-    fontWeight: '900',
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: '800',
   },
-  brandSub: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 1,
+  iconRail: {
+    flexDirection: 'row',
+    gap: 8,
   },
   badge: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.1)',
+    borderColor: 'rgba(245,254,255,0.2)',
+    borderRadius: 999,
     borderWidth: 1,
     height: 40,
     justifyContent: 'center',
     width: 40,
   },
+  pressedBadge: {
+    opacity: 0.72,
+    transform: [{ scale: 0.96 }],
+  },
+  headlineBlock: {
+    gap: 7,
+    paddingHorizontal: spacing.page,
+    paddingTop: 14,
+  },
+  kicker: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  headline: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: '900',
+    lineHeight: 34,
+    maxWidth: 330,
+  },
   hero: {
     borderRadius: 8,
-    height: 330,
+    height: 360,
     marginHorizontal: spacing.page,
-    marginTop: 8,
+    marginTop: 18,
     overflow: 'hidden',
   },
   heroImage: {
@@ -269,8 +327,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 8,
+    backgroundColor: colors.text,
+    borderRadius: 999,
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
@@ -284,17 +342,19 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.14)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
+    borderWidth: 1,
     height: 44,
     justifyContent: 'center',
     width: 48,
   },
   heroLoading: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(245,254,255,0.08)',
     borderRadius: 8,
-    height: 330,
+    height: 360,
     justifyContent: 'center',
     marginHorizontal: spacing.page,
     marginTop: 8,

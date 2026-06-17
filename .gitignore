@@ -32,6 +32,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
@@ -42,3 +43,4 @@ yarn-error.*
 
 # local sync db
 reviews-db.json
+*.zip

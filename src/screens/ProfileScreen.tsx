@@ -1,12 +1,14 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '../components/EmptyState';
 import { MoviePosterCard } from '../components/MoviePosterCard';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../hooks/useAuth';
 import { colors, spacing } from '../theme/colors';
 import { MovieSummary, Review } from '../types/movie';
 import { RootStackParamList } from '../types/navigation';
@@ -15,7 +17,8 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export function ProfileScreen() {
   const navigation = useNavigation<Navigation>();
-  const { user, signIn, signOut, data } = useApp();
+  const { user, signOut } = useAuth();
+  const { data } = useApp();
 
   const favorites = Object.values(data?.favorites || {});
   const want = Object.values(data?.want || {});
@@ -28,6 +31,7 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient colors={[colors.background, '#064A58', colors.background]} style={StyleSheet.absoluteFill} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View style={styles.avatar}>
@@ -39,10 +43,10 @@ export function ProfileScreen() {
           </View>
           <View style={styles.headerText}>
             <Text style={styles.name}>{user?.name || 'Filmly Member'}</Text>
-            <Text style={styles.email}>{user?.email || 'Sign in to attach your Google identity'}</Text>
+            <Text style={styles.email}>{user?.email || ''}</Text>
           </View>
-          <Pressable onPress={user ? signOut : () => signIn()} style={styles.authButton}>
-            <Ionicons name={user ? 'log-out-outline' : 'logo-google'} size={18} color={colors.text} />
+          <Pressable onPress={signOut} style={styles.authButton}>
+            <Ionicons name="log-out-outline" size={18} color={colors.text} />
           </Pressable>
         </View>
 
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.page,
-    paddingBottom: 32,
+    paddingBottom: 108,
   },
   header: {
     alignItems: 'center',
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
   },
   avatar: {
     alignItems: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: colors.text,
     borderRadius: 8,
     height: 58,
     justifyContent: 'center',
@@ -210,17 +214,17 @@ const styles = StyleSheet.create({
   },
   authButton: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.1)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
     borderWidth: 1,
     height: 42,
     justifyContent: 'center',
     width: 42,
   },
   statsCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 24,
@@ -272,8 +276,8 @@ const styles = StyleSheet.create({
   },
   reviewCard: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',

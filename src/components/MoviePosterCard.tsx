@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '../theme/colors';
@@ -29,11 +30,13 @@ export function MoviePosterCard({ movie, onPress, compact = false }: Props) {
           <Ionicons name="star" size={11} color={colors.gold} />
           <Text style={styles.ratingText}>{movie.rating.toFixed(1)}</Text>
         </View>
+        <LinearGradient colors={['rgba(2,18,24,0)', 'rgba(2,18,24,0.92)']} style={styles.posterShade}>
+          <Text numberOfLines={2} style={styles.title}>
+            {movie.title}
+          </Text>
+          <Text style={styles.year}>{yearFromDate(movie.releaseDate)}</Text>
+        </LinearGradient>
       </View>
-      <Text numberOfLines={2} style={styles.title}>
-        {movie.title}
-      </Text>
-      <Text style={styles.year}>{yearFromDate(movie.releaseDate)}</Text>
     </Pressable>
   );
 }
@@ -49,6 +52,8 @@ const styles = StyleSheet.create({
   },
   posterWrap: {
     backgroundColor: colors.surface2,
+    borderColor: 'rgba(245,254,255,0.16)',
+    borderWidth: 1,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -62,8 +67,10 @@ const styles = StyleSheet.create({
   },
   rating: {
     alignItems: 'center',
-    backgroundColor: 'rgba(8,10,15,0.86)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(2,18,24,0.72)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
     left: 8,
@@ -71,6 +78,15 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     position: 'absolute',
     top: 8,
+  },
+  posterShade: {
+    bottom: 0,
+    gap: 3,
+    left: 0,
+    padding: 10,
+    paddingTop: 44,
+    position: 'absolute',
+    right: 0,
   },
   ratingText: {
     color: colors.text,
@@ -82,10 +98,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     lineHeight: 17,
-    marginTop: 9,
   },
   year: {
-    color: colors.faint,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 3,

@@ -19,35 +19,35 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ActionPill } from '../components/ActionPill';
-import { useApp } from '../context/AppContext';
+import { useMovieActions } from '../hooks/useMovieActions';
 import { tmdb } from '../services/tmdb';
 import { colors, spacing } from '../theme/colors';
 import { Movie, Review } from '../types/movie';
 import { RootStackParamList } from '../types/navigation';
 import { formatDate, formatRuntime } from '../utils/format';
-import { fetchAllReviews } from '../services/db';
+import { reviewService } from '../services/reviewService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MovieDetails'>;
 
 export function MovieDetailsScreen({ route, navigation }: Props) {
   const { movieId } = route.params;
-  const { toggleFavorite, isFavorite, getStatus, setStatus, addReview, data } = useApp();
+  const { toggleFavorite, isFavorite, getStatus, setStatus, addReview, userReviews } = useMovieActions();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(4);
   const [saved, setSaved] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const [communityReviews, setCommunityReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
   const loadCommunityReviews = async () => {
     try {
       setReviewsLoading(true);
-      const allReviews = await fetchAllReviews();
-      const filtered = allReviews.filter((item) => item.movieId === movieId);
-      setCommunityReviews(filtered);
+      const reviews = await reviewService.fetchMovieReviews(movieId);
+      setCommunityReviews(reviews);
     } catch (error) {
-      console.error('Error loading community reviews:', error);
+      console.warn('Error loading community reviews:', error);
     } finally {
       setReviewsLoading(false);
     }
@@ -66,12 +66,12 @@ export function MovieDetailsScreen({ route, navigation }: Props) {
   }, [movieId]);
 
   useEffect(() => {
-    const existingReview = data?.reviews?.find((review) => review.movieId === movieId);
+    const existingReview = userReviews?.find((review) => review.movieId === movieId);
     if (existingReview) {
       setReviewText(existingReview.text);
       setReviewRating(existingReview.rating);
     }
-  }, [movieId, data?.reviews]);
+  }, [movieId, userReviews]);
 
   const summary = useMemo(() => {
     if (!movie) return null;
@@ -96,18 +96,26 @@ export function MovieDetailsScreen({ route, navigation }: Props) {
 
   const saveReview = async () => {
     if (!movie || !reviewText.trim()) return;
-    await addReview({
-      movieId: movie.id,
-      movieTitle: movie.title,
-      posterPath: movie.posterPath,
-      rating: reviewRating,
-      text: reviewText.trim(),
-      createdAt: new Date().toISOString(),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1400);
-    // Reload community reviews to show the user's review immediately
-    await loadCommunityReviews();
+    setReviewError('');
+    try {
+      await addReview({
+        movieId: movie.id,
+        movieTitle: movie.title,
+        posterPath: movie.posterPath,
+        rating: reviewRating,
+        text: reviewText.trim(),
+        createdAt: new Date().toISOString(),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1400);
+      await loadCommunityReviews();
+    } catch (error) {
+      setReviewError(
+        error instanceof Error
+          ? error.message
+          : 'Could not save your review. Please check your Supabase login.',
+      );
+    }
   };
 
   if (loading || !movie || !summary) {
@@ -120,6 +128,7 @@ export function MovieDetailsScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient colors={[colors.background, '#064A58', colors.background]} style={StyleSheet.absoluteFill} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <ImageBackground source={{ uri: movie.backdropPath || movie.posterPath || undefined }} style={styles.backdrop}>
@@ -247,9 +256,9 @@ export function MovieDetailsScreen({ route, navigation }: Props) {
                 <Ionicons name="create-outline" size={17} color={colors.background} />
                 <Text style={styles.saveText}>{saved ? 'Saved' : 'Save Review'}</Text>
               </Pressable>
+              {reviewError ? <Text style={styles.reviewError}>{reviewError}</Text> : null}
             </View>
 
-            {/* Community Reviews Section */}
             <View style={styles.communitySection}>
               <Text style={styles.sectionTitle}>Community Reviews</Text>
               {reviewsLoading ? (
@@ -316,7 +325,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    paddingBottom: 34,
+    paddingBottom: 104,
   },
   backdrop: {
     height: 310,
@@ -326,9 +335,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(8,10,15,0.72)',
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.12)',
+    borderColor: 'rgba(245,254,255,0.22)',
+    borderRadius: 999,
     borderWidth: 1,
     height: 42,
     justifyContent: 'center',
@@ -349,7 +358,7 @@ const styles = StyleSheet.create({
   poster: {
     aspectRatio: 0.68,
     backgroundColor: colors.surface2,
-    borderColor: colors.line,
+    borderColor: 'rgba(245,254,255,0.2)',
     borderRadius: 8,
     borderWidth: 1,
     width: 128,
@@ -392,9 +401,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   genre: {
-    backgroundColor: colors.surface2,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.1)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
     borderWidth: 1,
     color: colors.muted,
     fontSize: 11,
@@ -423,8 +432,8 @@ const styles = StyleSheet.create({
     lineHeight: 23,
   },
   trailerCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
@@ -442,7 +451,7 @@ const styles = StyleSheet.create({
   playButton: {
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: colors.text,
     borderRadius: 34,
     height: 68,
     justifyContent: 'center',
@@ -469,8 +478,8 @@ const styles = StyleSheet.create({
   },
   emptyTrailer: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -484,9 +493,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   castPill: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
+    borderRadius: 999,
     borderWidth: 1,
     color: colors.text,
     fontSize: 12,
@@ -495,8 +504,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   reviewBox: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 28,
@@ -511,8 +520,8 @@ const styles = StyleSheet.create({
     paddingRight: 6,
   },
   reviewInput: {
-    backgroundColor: colors.background,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(2,18,24,0.5)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     color: colors.text,
@@ -522,8 +531,8 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: 8,
+    backgroundColor: colors.text,
+    borderRadius: 999,
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
@@ -538,12 +547,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
   },
+  reviewError: {
+    color: colors.hot,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+    marginTop: 10,
+    textAlign: 'center',
+  },
   communitySection: {
     marginTop: 28,
   },
   communityCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     padding: 14,

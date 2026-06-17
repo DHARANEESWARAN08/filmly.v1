@@ -22,8 +22,8 @@ export function EmptyState({ icon = 'film-outline', title, subtitle }: Props) {
 const styles = StyleSheet.create({
   empty: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(245,254,255,0.09)',
+    borderColor: 'rgba(245,254,255,0.16)',
     borderRadius: 8,
     borderWidth: 1,
     gap: 8,

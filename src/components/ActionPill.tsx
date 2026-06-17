@@ -22,9 +22,9 @@ export function ActionPill({ label, icon, active, onPress }: Props) {
 const styles = StyleSheet.create({
   pill: {
     alignItems: 'center',
-    backgroundColor: colors.surface2,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,254,255,0.1)',
+    borderColor: 'rgba(245,254,255,0.18)',
+    borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   active: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.text,
+    borderColor: colors.text,
   },
   label: {
     color: colors.text,

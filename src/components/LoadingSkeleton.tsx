@@ -22,11 +22,11 @@ const styles = StyleSheet.create({
   },
   poster: {
     aspectRatio: 0.68,
-    backgroundColor: colors.elevated,
+    backgroundColor: 'rgba(245,254,255,0.12)',
     borderRadius: 8,
   },
   line: {
-    backgroundColor: colors.elevated,
+    backgroundColor: 'rgba(245,254,255,0.12)',
     borderRadius: 4,
     height: 10,
     marginTop: 10,
