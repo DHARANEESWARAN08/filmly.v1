@@ -11,9 +11,6 @@ For quick evaluation, a demo account has been provided:
 **Password:** 111111
 
 > Please use this account to explore all features of the application you can also
-
-https://github.com/user-attachments/assets/77b5dcda-314e-4b31-a7d2-d91a4ee024a6
-
  creating a new account.
 
 ## ✨ Features
@@ -50,11 +47,3 @@ The compiled APK is available in the **GitHub Releases** section.
 https://github.com/user-attachments/assets/41dff811-65c1-4dfb-a942-5c5eecb087a9
 
 
-
-### Movie Details
-
-![Movie Details](assets/demo/movie-details.png)
-
-### Profile Screen
-
-![Profile](assets/demo/profile.png)
