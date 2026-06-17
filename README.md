@@ -10,7 +10,11 @@ For quick evaluation, a demo account has been provided:
 **Username:** Saikiran
 **Password:** 111111
 
-> Please use this account to explore all features of the application without creating a new account.
+> Please use this account to explore all features of the application you can also
+
+https://github.com/user-attachments/assets/77b5dcda-314e-4b31-a7d2-d91a4ee024a6
+
+ creating a new account.
 
 ## ✨ Features
 
@@ -42,19 +46,10 @@ The compiled APK is available in the **GitHub Releases** section.
 
 ## 🎥 Demo Video
 
-(Add your demo video here)
 
-## 📷 Screenshots
+https://github.com/user-attachments/assets/41dff811-65c1-4dfb-a942-5c5eecb087a9
 
-(Add screenshots here)
 
-### Login Screen
-
-![Login](assets/demo/login.png)
-
-### Home Screen
-
-![Home](assets/demo/home.png)
 
 ### Movie Details
 
